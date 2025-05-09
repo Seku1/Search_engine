@@ -5,13 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="262a5c1d-fbfb-4b3d-9be8-4b850b38dcb9" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/get_content/app.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/get_content/preproces.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/get_content/templates/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/get_content/compute_tfidf.py" beforeDir="false" afterPath="$PROJECT_DIR$/get_content/compute_tfidf.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/get_content/create_bag_of_words.py" beforeDir="false" afterPath="$PROJECT_DIR$/get_content/create_bag_of_words.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/get_content/svd_search.py" beforeDir="false" afterPath="$PROJECT_DIR$/get_content/svd_search.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,34 +35,34 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "DefaultHtmlFileTemplate": "HTML File",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.app (1).executor": "Run",
-    "Python.app.executor": "Run",
-    "Python.compute_tfidf.executor": "Run",
-    "Python.cos.executor": "Run",
-    "Python.create_bag_of_words.executor": "Run",
-    "Python.get_responses.executor": "Run",
-    "Python.get_wiki.executor": "Run",
-    "Python.idf_response.executor": "Run",
-    "Python.normalized_search.executor": "Run",
-    "Python.preproces.executor": "Run",
-    "Python.svd_search.executor": "Run",
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "main",
-    "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "C:/Users/piotr/Desktop/Piotr/Search_engine",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.app (1).executor&quot;: &quot;Run&quot;,
+    &quot;Python.app.executor&quot;: &quot;Run&quot;,
+    &quot;Python.compute_tfidf.executor&quot;: &quot;Run&quot;,
+    &quot;Python.cos.executor&quot;: &quot;Run&quot;,
+    &quot;Python.create_bag_of_words.executor&quot;: &quot;Run&quot;,
+    &quot;Python.get_responses.executor&quot;: &quot;Run&quot;,
+    &quot;Python.get_wiki.executor&quot;: &quot;Run&quot;,
+    &quot;Python.idf_response.executor&quot;: &quot;Run&quot;,
+    &quot;Python.normalized_search.executor&quot;: &quot;Run&quot;,
+    &quot;Python.preproces.executor&quot;: &quot;Run&quot;,
+    &quot;Python.svd_search.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/piotr/Desktop/Piotr/Search_engine&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\piotr\Desktop\Piotr\Search_engine" />
@@ -200,7 +195,8 @@
       <workItem from="1746802961001" duration="701000" />
       <workItem from="1746817623054" duration="543000" />
       <workItem from="1746818183378" duration="22000" />
-      <workItem from="1746823723765" duration="8247000" />
+      <workItem from="1746823723765" duration="8844000" />
+      <workItem from="1746825200333" duration="37000" />
     </task>
     <servers />
   </component>
