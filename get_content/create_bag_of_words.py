@@ -1,51 +1,85 @@
 import json
+import re
 import numpy as np
-from collections import Counter
 import scipy.sparse as sp
+from collections import Counter
+from tqdm import tqdm
 
-# 1. Wczytaj oczyszczone dokumenty
-with open("wiki_procesed.json", "r", encoding="utf-8") as f:
-    processed_docs = json.load(f)
 
-# 2. Zbuduj słownik: token -> indeks
-vocab = {}
-for doc in processed_docs:
-    for tok in doc.split():
-        if tok not in vocab:
-            vocab[tok] = len(vocab)
+def create_vocabulary(documents):
+    """
+    Creates a vocabulary (dictionary) from processed documents
+    """
+    print("Creating vocabulary...")
+    all_words = Counter()
 
-print(f"Zbudowano słownik o rozmiarze: {len(vocab)} tokenów.")
+    for doc in tqdm(documents):
+        words = doc.split()
+        all_words.update(words)
 
-# 3a. Wariant: lista Counterów (lekka, nie zużywa pamięci na pełną macierz)
-doc_counters = [Counter(doc.split()) for doc in processed_docs]
+    # Filter words that appear at least 5 times
+    vocab_words = {word for word, count in all_words.items() if count >= 5}
 
-# Teraz doc_counters[i][tok] to liczba wystąpień tok w dokumencie i
+    # Create dictionary mapping words to indices
+    vocab = {word: idx for idx, word in enumerate(sorted(vocab_words))}
 
-# 3b. Wariant: rzadka macierz SciPy CSR (D x M)
-D = len(processed_docs)
-M = len(vocab)
+    print(f"Vocabulary size: {len(vocab)} words")
+    return vocab
 
-rows = []
-cols = []
-data = []
 
-for i, counter in enumerate(doc_counters):
-    for tok, cnt in counter.items():
-        j = vocab[tok]
-        rows.append(i)
-        cols.append(j)
-        data.append(cnt)
+def documents_to_bow(documents, vocab):
+    """
+    Converts documents to a sparse bag-of-words matrix
+    """
+    print("Creating Bag-of-Words matrix...")
+    rows = []
+    cols = []
+    data = []
 
-# zbuduj macierz D×M
-X = sp.csr_matrix((data, (rows, cols)), shape=(D, M), dtype=int)
+    for doc_idx, doc in enumerate(tqdm(documents)):
+        words = doc.split()
+        word_counts = Counter(words)
 
-print(f"Macierz bag-of-words ma kształt: {X.shape} i zawiera {X.nnz} niezerowych elementów.")
+        for word, count in word_counts.items():
+            if word in vocab:
+                rows.append(doc_idx)
+                cols.append(vocab[word])
+                data.append(count)
 
-# 4. Zapisz słownik i opcjonalnie macierz
-with open("vocab.json", "w", encoding="utf-8") as f:
-    json.dump(vocab, f, ensure_ascii=False, indent=2)
+    # Create sparse matrix
+    X = sp.csr_matrix((data, (rows, cols)), shape=(len(documents), len(vocab)))
 
-# Jeśli chcesz zapisać macierz do pliku .npz:
-sp.save_npz("bow_matrix.npz", X)
+    print(f"Created BoW matrix with shape: {X.shape}")
+    return X
 
-print("Zapisano: vocab.json oraz bow_matrix.npz")
+
+def main():
+    print("Starting Bag-of-Words creation process...")
+
+    # Load preprocessed documents
+    print("Loading processed documents...")
+    with open("wiki_procesed.json", "r", encoding="utf-8") as f:
+        processed_docs = json.load(f)
+
+    print(f"Loaded {len(processed_docs)} processed documents")
+
+    # Create vocabulary
+    vocab = create_vocabulary(processed_docs)
+
+    # Save vocabulary to file
+    with open("vocab.json", "w", encoding="utf-8") as f:
+        json.dump(vocab, f)
+    print("Saved vocabulary to vocab.json")
+
+    # Create bag-of-words matrix
+    X_bow = documents_to_bow(processed_docs, vocab)
+
+    # Save bag-of-words matrix
+    sp.save_npz("bow_matrix.npz", X_bow)
+    print("Saved Bag-of-Words matrix to bow_matrix.npz")
+
+    print("\nProcessing complete. You can now run compute_tfidf.py to create the TF-IDF matrix.")
+
+
+if __name__ == "__main__":
+    main()

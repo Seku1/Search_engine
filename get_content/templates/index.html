@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Search System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .search-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .result-item {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+        .result-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .score-badge {
+            font-size: 0.8em;
+            background-color: #17a2b8;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 10px;
+            margin-left: 10px;
+        }
+        .document-preview {
+            max-height: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 10px;
+        }
+        .system-info {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-top: 20px;
+        }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .full-document-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-button:hover {
+            color: black;
+        }
+        /* SVD Panel Styles */
+        .svd-panel {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .dimension-tag {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 10px;
+            margin: 3px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .dimension-tag.active {
+            background-color: #28a745;
+        }
+        .dimension-tag:hover {
+            background-color: #5a6268;
+        }
+        .dimension-tag.active:hover {
+            background-color: #218838;
+        }
+        .progress-bar {
+            height: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">Document Search System</h1>
+
+        <!-- SVD Setup Panel -->
+        <div class="svd-panel">
+            <h3>SVD Dimensions Setup</h3>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">Available Dimensions</div>
+                        <div class="card-body" id="available-dimensions">
+                            <div class="text-center">Loading...</div>
+                        </div>
+                        <div class="card-footer">
+                            <small class="text-muted">Click on a dimension to use it for search</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">Compute New Dimension</div>
+                        <div class="card-body">
+                            <div class="input-group mb-3">
+                                <input type="number" class="form-control" id="new-dimension" placeholder="Enter dimensions (e.g., 50)" min="1" max="1000">
+                                <button class="btn btn-primary" type="button" id="compute-svd-btn">Compute SVD</button>
+                            </div>
+                            <div class="progress mb-2" style="display: none;" id="computation-progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                            </div>
+                            <div id="computation-message" class="form-text"></div>
+                        </div>
+                        <div class="card-footer">
+                            <small class="text-muted">Higher dimensions can provide better results but take longer to compute</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="alert alert-info">
+                <strong>Current SVD Dimension:</strong> <span id="current-dimension">Loading...</span>
+                <p class="mb-0 mt-2"><small>SVD (Singular Value Decomposition) reduces the dimensions of the document space to capture semantic relationships. Higher dimensions may capture more nuanced relationships but require more computation.</small></p>
+            </div>
+        </div>
+
+        <div class="search-container">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="input-group mb-3">
+                        <input type="text" id="search-input" class="form-control" placeholder="Enter your search query...">
+                        <button class="btn btn-primary" type="button" id="search-button">Search</button>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" id="results-count">
+                        <option value="5">5 results</option>
+                        <option value="10">10 results</option>
+                        <option value="20">20 results</option>
+                        <option value="50">50 results</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" id="search-type">
+                        <option value="regular">Regular Cosine</option>
+                        <option value="absolute">Absolute Cosine</option>
+                        <option value="svd">SVD Search</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="loader" id="loader"></div>
+
+        <div id="error-message" class="alert alert-danger" style="display: none;"></div>
+
+        <div id="results-container"></div>
+
+        <div class="system-info text-center">
+            <p>Document Search System powered by TF-IDF and Cosine Similarity</p>
+            <button class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#methodInfo" aria-expanded="false">
+                About Search Methods
+            </button>
+            <div class="collapse" id="methodInfo">
+                <div class="card card-body mt-2 mb-3">
+                    <h5>Search Methods Explained</h5>
+                    <ul class="text-start">
+                        <li><strong>Regular Cosine</strong>: Standard cosine similarity measure between query and document vectors.</li>
+                        <li><strong>Absolute Cosine</strong>: Uses the absolute value of cosine similarity, which can find both similar and opposite documents.</li>
+                        <li><strong>SVD Search</strong>: Uses Singular Value Decomposition to reduce dimensionality and find semantic relationships between documents.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full Document Modal -->
+    <div id="document-modal" class="full-document-modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-modal">&times;</span>
+            <h2 id="modal-title">Document Details</h2>
+            <div id="modal-content"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('search-input');
+            const searchButton = document.getElementById('search-button');
+            const resultsCount = document.getElementById('results-count');
+            const searchType = document.getElementById('search-type');
+            const resultsContainer = document.getElementById('results-container');
+            const loader = document.getElementById('loader');
+            const errorMessage = document.getElementById('error-message');
+            const modal = document.getElementById('document-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalContent = document.getElementById('modal-content');
+            const closeModal = document.getElementById('close-modal');
+
+            // SVD panel elements
+            const availableDimensions = document.getElementById('available-dimensions');
+            const currentDimension = document.getElementById('current-dimension');
+            const newDimensionInput = document.getElementById('new-dimension');
+            const computeSvdBtn = document.getElementById('compute-svd-btn');
+            const computationProgress = document.getElementById('computation-progress');
+            const computationMessage = document.getElementById('computation-message');
+
+            // Load available SVD dimensions on page load
+            loadSvdDimensions();
+
+            // Execute search when Enter key is pressed in the search input
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    executeSearch();
+                }
+            });
+
+            // Execute search when search button is clicked
+            searchButton.addEventListener('click', executeSearch);
+
+            // Compute SVD when button is clicked
+            computeSvdBtn.addEventListener('click', computeSVD);
+
+            // Close modal when clicking the close button
+            closeModal.addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
+
+            // Close modal when clicking outside the modal content
+            window.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+
+            // Load available SVD dimensions
+            function loadSvdDimensions() {
+                fetch('/svd-dimensions')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch SVD dimensions');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        displayAvailableDimensions(data.available_dimensions, data.current_dimensions);
+                        currentDimension.textContent = data.current_dimensions || 'Not set';
+                    })
+                    .catch(error => {
+                        availableDimensions.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+                        currentDimension.textContent = 'Unknown';
+                    });
+            }
+
+            // Display available dimensions as clickable tags
+            function displayAvailableDimensions(dimensions, currentDim) {
+                if (!dimensions || dimensions.length === 0) {
+                    availableDimensions.innerHTML = '<div class="alert alert-warning">No SVD dimensions available. Compute one using the form on the right.</div>';
+                    return;
+                }
+
+                // Sort dimensions numerically
+                dimensions.sort((a, b) => a - b);
+
+                let html = '';
+                dimensions.forEach(dim => {
+                    const isActive = dim === currentDim;
+                    html += `<span class="dimension-tag ${isActive ? 'active' : ''}" data-dimension="${dim}">${dim}</span>`;
+                });
+
+                availableDimensions.innerHTML = html;
+
+                // Add click handlers to dimension tags
+                document.querySelectorAll('.dimension-tag').forEach(tag => {
+                    tag.addEventListener('click', function() {
+                        const dimension = parseInt(this.getAttribute('data-dimension'));
+                        selectDimension(dimension);
+                    });
+                });
+            }
+
+            // Select a dimension for SVD search
+            function selectDimension(dimension) {
+                // Update UI to show selected dimension
+                document.querySelectorAll('.dimension-tag').forEach(tag => {
+                    tag.classList.remove('active');
+                    if (parseInt(tag.getAttribute('data-dimension')) === dimension) {
+                        tag.classList.add('active');
+                    }
+                });
+
+                currentDimension.textContent = dimension;
+
+                // Automatically select SVD search type
+                searchType.value = 'svd';
+
+                // Show message
+                showMessage(`SVD dimension ${dimension} selected for search`, 'success');
+            }
+
+            // Compute new SVD dimension
+            function computeSVD() {
+                const dimensions = parseInt(newDimensionInput.value);
+                if (!dimensions || dimensions < 1) {
+                    showMessage('Please enter a valid number of dimensions (at least 1)', 'danger');
+                    return;
+                }
+
+                // Show progress indicator
+                computationProgress.style.display = 'block';
+                computationMessage.innerHTML = `<span class="text-primary">Computing SVD with ${dimensions} dimensions. This may take some time...</span>`;
+                computeSvdBtn.disabled = true;
+
+                fetch('/compute-svd', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        dimensions: dimensions
+                    }),
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.error || 'Error computing SVD');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Hide progress indicator
+                    computationProgress.style.display = 'none';
+                    computeSvdBtn.disabled = false;
+
+                    // Show success message
+                    computationMessage.innerHTML = `<span class="text-success">✓ ${data.message}</span>`;
+
+                    // Reload available dimensions
+                    loadSvdDimensions();
+
+                    // Automatically select the new dimension
+                    selectDimension(data.dimensions);
+                })
+                .catch(error => {
+                    // Hide progress indicator
+                    computationProgress.style.display = 'none';
+                    computeSvdBtn.disabled = false;
+
+                    // Show error message
+                    computationMessage.innerHTML = `<span class="text-danger">✗ ${error.message}</span>`;
+                });
+            }
+
+            function executeSearch() {
+                const query = searchInput.value.trim();
+                if (!query) {
+                    showError('Please enter a search query');
+                    return;
+                }
+
+                // Show loader and hide previous results
+                loader.style.display = 'block';
+                resultsContainer.innerHTML = '';
+                errorMessage.style.display = 'none';
+
+                // Get current SVD dimension if SVD search is selected
+                let svdDimensions = null;
+                if (searchType.value === 'svd') {
+                    const activeDimensionTag = document.querySelector('.dimension-tag.active');
+                    if (activeDimensionTag) {
+                        svdDimensions = parseInt(activeDimensionTag.getAttribute('data-dimension'));
+                    }
+                }
+
+                fetch('/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        k: parseInt(resultsCount.value),
+                        search_type: searchType.value,
+                        svd_dimensions: svdDimensions
+                    }),
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.error || 'Error performing search');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    loader.style.display = 'none';
+                    displayResults(data.results, query, searchType.value, data.svd_dimensions);
+                })
+                .catch(error => {
+                    loader.style.display = 'none';
+                    showError(error.message);
+                });
+            }
+
+            function displayResults(results, query, searchTypeValue, svdDimensions) {
+                if (results.length === 0) {
+                    resultsContainer.innerHTML = '<div class="alert alert-info">No matching documents found.</div>';
+                    return;
+                }
+
+                const similarityType = searchTypeValue === 'absolute' ? '|cos θ|' : 'cos θ';
+
+                let searchTypeDisplay = '';
+                if (searchTypeValue === 'regular') {
+                    searchTypeDisplay = 'Regular Cosine Similarity';
+                } else if (searchTypeValue === 'absolute') {
+                    searchTypeDisplay = 'Absolute Cosine Similarity';
+                } else if (searchTypeValue === 'svd') {
+                    searchTypeDisplay = `SVD Search (${svdDimensions} dimensions)`;
+                }
+
+                let resultsHTML = `
+                    <h2>Search Results for "${query}"</h2>
+                    <p>Found ${results.length} similar documents using ${searchTypeDisplay}:</p>
+                `;
+
+                results.forEach((result, index) => {
+                    resultsHTML += `
+                        <div class="result-item">
+                            <h3>Document #${result.index}
+                                <span class="score-badge">${similarityType}: ${result.score.toFixed(4)}</span>
+                            </h3>
+                            <div class="document-preview">
+                                ${result.preview}
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm mt-3 view-document"
+                                    data-document-id="${result.index}">
+                                View Full Document
+                            </button>
+                        </div>
+                    `;
+                });
+
+                resultsContainer.innerHTML = resultsHTML;
+
+                // Add event listeners to "View Full Document" buttons
+                document.querySelectorAll('.view-document').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const docId = this.getAttribute('data-document-id');
+                        fetchFullDocument(docId);
+                    });
+                });
+            }
+
+            function fetchFullDocument(docId) {
+                loader.style.display = 'block';
+
+                fetch(`/document/${docId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch document');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        loader.style.display = 'none';
+                        showDocumentModal(docId, data.document);
+                    })
+                    .catch(error => {
+                        loader.style.display = 'none';
+                        showError(error.message);
+                    });
+            }
+
+            function showDocumentModal(docId, content) {
+                modalTitle.textContent = `Document #${docId}`;
+
+                // Format content with paragraphs
+                const formattedContent = content
+                    .split('\n')
+                    .map(para => para.trim())
+                    .filter(para => para.length > 0)
+                    .map(para => `<p>${para}</p>`)
+                    .join('');
+
+                modalContent.innerHTML = formattedContent;
+                modal.style.display = 'block';
+            }
+
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+            }
+
+            function showMessage(message, type) {
+                errorMessage.textContent = message;
+                errorMessage.className = `alert alert-${type}`;
+                errorMessage.style.display = 'block';
+
+                // Hide after 5 seconds
+                setTimeout(() => {
+                    errorMessage.style.display = 'none';
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>
